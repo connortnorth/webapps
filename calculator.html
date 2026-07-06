@@ -1,37 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>🧮 Calculator</title>
+    <meta name="description" content="A simple calculator.">
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
         body {
             margin: 0;
-            padding: 10px;
+            padding: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: sans-serif;
+            min-height: 90vh;
             background: #fff;
         }
         .calc-container {
             width: 100%;
-            max-width: 320px;
+            max-width: 360px;
             border: 4px solid #111;
-            border-radius: 16px;
-            padding: 20px;
-            background: #fff;
-            box-shadow: 4px 4px 0px #111;
+            border-radius: 20px;
+            padding: 24px;
+            background: #ffffff;
+            box-shadow: 6px 6px 0px #111;
+        }
+        .display-wrapper {
+            background: #f8fafc;
+            border: 3px solid #111;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            text-align: right;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
+        }
+        .formula-history {
+            min-height: 20px;
+            font-size: 0.95rem;
+            color: #64748b;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         #calc-display {
             width: 100%;
-            height: 60px;
-            border: 3px solid #111;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
+            border: none;
+            background: transparent;
+            font-size: 2.2rem;
+            font-weight: 800;
             text-align: right;
-            padding: 10px;
-            background: #f9f9f9;
-            font-weight: bold;
-            box-sizing: border-box;
+            color: #1e293b;
+            margin-top: 4px;
+            outline: none;
+            user-select: text;
+        }
+        .keyboard-tip {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
         .calc-buttons {
             display: grid;
@@ -39,14 +73,20 @@
             gap: 12px;
         }
         .calc-btn {
-            padding: 18px;
-            font-size: 1.3rem;
-            font-weight: bold;
+            padding: 16px 0;
+            font-size: 1.4rem;
+            font-weight: 700;
             border: 3px solid #111;
-            border-radius: 10px;
+            border-radius: 12px;
             background: white;
+            color: #111;
             cursor: pointer;
             box-shadow: 3px 3px 0px #111;
+            transition: all 0.05s ease;
+        }
+        .calc-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px #111;
         }
         .calc-btn:active {
             transform: translate(2px, 2px);
@@ -59,48 +99,290 @@
             background: #ff6b6b;
             color: white;
         }
+        .calc-btn.backspace {
+            background: #fed7aa;
+        }
+        .calc-btn.equals {
+            background: #4ade80;
+        }
+        .error-text {
+            color: #ef4444 !important;
+            font-size: 1.5rem !important;
+        }
     </style>
 </head>
 <body>
 
 <div class="calc-container">
-    <input type="text" id="calc-display" readonly>
+    <div class="display-wrapper">
+        <div class="formula-history" id="calc-history"></div>
+        <input type="text" id="calc-display" placeholder="0" autocomplete="off">
+    </div>
+
     <div class="calc-buttons">
         <button class="calc-btn clear" onclick="clearCalc()">C</button>
-        <button class="calc-btn operator" onclick="appendCalc('/')">/</button>
-        <button class="calc-btn operator" onclick="appendCalc('*')">*</button>
-        <button class="calc-btn operator" onclick="appendCalc('-')">-</button>
+        <button class="calc-btn backspace" onclick="backspaceCalc()">⌫</button>
+        <button class="calc-btn operator" onclick="appendCalc('^')">^</button>
+        <button class="calc-btn operator" onclick="appendCalc('/')">÷</button>
 
         <button class="calc-btn" onclick="appendCalc('7')">7</button>
         <button class="calc-btn" onclick="appendCalc('8')">8</button>
         <button class="calc-btn" onclick="appendCalc('9')">9</button>
-        <button class="calc-btn operator" onclick="appendCalc('+')">+</button>
+        <button class="calc-btn operator" onclick="appendCalc('*')">×</button>
 
         <button class="calc-btn" onclick="appendCalc('4')">4</button>
         <button class="calc-btn" onclick="appendCalc('5')">5</button>
         <button class="calc-btn" onclick="appendCalc('6')">6</button>
-        <button class="calc-btn" style="grid-row: span 2; height: 100%; background: #4ade80;" onclick="calculateResult()">=</button>
+        <button class="calc-btn operator" onclick="appendCalc('-')">−</button>
 
         <button class="calc-btn" onclick="appendCalc('1')">1</button>
         <button class="calc-btn" onclick="appendCalc('2')">2</button>
         <button class="calc-btn" onclick="appendCalc('3')">3</button>
+        <button class="calc-btn operator" onclick="appendCalc('+')">+</button>
 
         <button class="calc-btn" style="grid-column: span 2;" onclick="appendCalc('0')">0</button>
         <button class="calc-btn" onclick="appendCalc('.')">.</button>
+        <button class="calc-btn equals" onclick="calculateResult()">=</button>
     </div>
 </div>
 
 <script>
     const display = document.getElementById('calc-display');
-    function appendCalc(val) { display.value += val; }
-    function clearCalc() { display.value = ''; }
+    const history = document.getElementById('calc-history');
+
+    let shouldResetDisplay = false;
+    let lastOperator = null;
+    let lastOperand = null;
+
+    function scrollToInputEnd() {
+        display.scrollLeft = display.scrollWidth;
+    }
+
+    function resetErrorState() {
+        display.value = '';
+        display.classList.remove('error-text');
+        shouldResetDisplay = false;
+        lastOperator = null;
+        lastOperand = null;
+    }
+
+    function appendCalc(val) {
+        // Clicking any layout button resets repeat memory since it's an explicit input change
+        lastOperator = null;
+        lastOperand = null;
+
+        if (display.classList.contains('error-text')) {
+            resetErrorState();
+        }
+
+        if (shouldResetDisplay) {
+            if (!isNaN(val) || val === '.' || val === 'x' || val === 'X') {
+                display.value = '';
+            }
+            shouldResetDisplay = false;
+        }
+
+        if (val === 'x' || val === 'X') {
+            val = '*';
+        }
+
+        const currentVal = display.value;
+        const lastChar = currentVal.slice(-1);
+        const operators = ['+', '-', '*', '/', '%', '^'];
+
+        if (val === '.' && lastChar === '.') return;
+
+        if (val === '*' && lastChar === '*') {
+            display.value = currentVal.slice(0, -1) + '^';
+            return;
+        }
+
+        if (operators.includes(val) && operators.includes(lastChar)) {
+            display.value = currentVal.slice(0, -1) + val;
+            return;
+        }
+
+        display.value += val;
+        scrollToInputEnd();
+    }
+
+    function clearCalc() {
+        display.value = '';
+        history.innerText = '';
+        display.classList.remove('error-text');
+        shouldResetDisplay = false;
+        lastOperator = null;
+        lastOperand = null;
+    }
+
+    function backspaceCalc() {
+        lastOperator = null;
+        lastOperand = null;
+        if (display.classList.contains('error-text')) {
+            clearCalc();
+            return;
+        }
+        display.value = display.value.slice(0, -1);
+    }
+
     function calculateResult() {
+        let equation = display.value.trim();
+
+        if (!equation) return;
+
+        const validOps = ['+', '-', '*', '/', '%', '^'];
+
         try {
-            display.value = Function('"use strict";return (' + display.value + ')')();
+            if (shouldResetDisplay && lastOperator && lastOperand !== null) {
+                equation = display.value + lastOperator + lastOperand;
+            } else {
+                let foundOp = null;
+                let foundIdx = -1;
+
+                for (let i = equation.length - 1; i >= 0; i--) {
+                    if (validOps.includes(equation[i])) {
+                        if (equation[i] === '-' && (i === 0 || validOps.includes(equation[i - 1]))) {
+                            continue;
+                        }
+                        foundOp = equation[i];
+                        foundIdx = i;
+                        break;
+                    }
+                }
+
+                if (foundOp && foundIdx !== -1) {
+                    lastOperator = foundOp;
+                    lastOperand = equation.slice(foundIdx + 1);
+                } else {
+                    lastOperator = null;
+                    lastOperand = null;
+                }
+            }
+
+            history.innerText = equation.replace(/\*/g, '×').replace(/\//g, '÷');
+
+            let jsEquation = equation.replace(/\^/g, '**');
+
+            if (/\/0(?!\d)/.test(jsEquation)) {
+                throw new Error('DivByZero');
+            }
+
+            let result = Function('"use strict"; return (' + jsEquation + ')')();
+
+            if (result === undefined || isNaN(result)) {
+                throw new Error('Invalid');
+            }
+
+            if (result % 1 !== 0) {
+                result = parseFloat(result.toFixed(6));
+            }
+
+            display.value = result;
+            shouldResetDisplay = true;
+
         } catch (e) {
-            display.value = 'Error';
+            display.classList.add('error-text');
+            shouldResetDisplay = true;
+            lastOperator = null;
+            lastOperand = null;
+
+            if (e.message === 'DivByZero') {
+                display.value = 'Cannot divide by 0';
+            } else if (e instanceof SyntaxError) {
+                display.value = 'Bad Expression';
+            } else {
+                display.value = 'Math Error';
+            }
         }
     }
+
+    // --- DIRECT TEXTBOX TYPING LISTENER ---
+    display.addEventListener('keydown', function(e) {
+        // FIX: Fire math evaluation immediately if Enter/Equals is touched
+        if (e.key === 'Enter' || e.key === '=') {
+            e.preventDefault();
+            calculateResult();
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            clearCalc();
+            return;
+        }
+
+        // Exclude control/navigation inputs from altering the repeat state
+        const controlKeys = ['Shift', 'Control', 'Alt', 'Meta', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'CapsLock'];
+        if (controlKeys.includes(e.key)) return;
+
+        // Clear the repeat parameters on any physical key input that isn't enter or equals
+        lastOperator = null;
+        lastOperand = null;
+
+        if (display.classList.contains('error-text')) {
+            if (e.key === 'Backspace') {
+                e.preventDefault();
+                clearCalc();
+                return;
+            }
+            resetErrorState();
+            return;
+        }
+
+        if (shouldResetDisplay) {
+            // If a fresh number string or equivalent multiplication key drops in, clear container
+            if (/^[0-9.xX*]$/.test(e.key)) {
+                e.preventDefault();
+                display.value = '';
+                shouldResetDisplay = false;
+                appendCalc(e.key);
+            } else {
+                // Chained operators can flow naturally onto current screen totals
+                shouldResetDisplay = false;
+            }
+        }
+    });
+
+    // Live input character standardizer
+    display.addEventListener('input', function() {
+        let val = display.value;
+
+        if (/[xX]/.test(val)) val = val.replace(/[xX]/g, '*');
+        if (val.includes('**')) val = val.replace(/\*\*/g, '^');
+
+        const operators = ['+', '-', '*', '/', '%', '^'];
+        let cleaned = '';
+        for (let i = 0; i < val.length; i++) {
+            let char = val[i];
+            let prev = cleaned.slice(-1);
+            if (operators.includes(char) && operators.includes(prev)) {
+                cleaned = cleaned.slice(0, -1) + char;
+            } else {
+                cleaned += char;
+            }
+        }
+        display.value = cleaned;
+    });
+
+    // Global background frame window configuration listener
+    window.addEventListener('keydown', function(e) {
+        if (document.activeElement === display) return;
+
+        const validKeys = '0123456789.+-*/%^xX';
+
+        if (validKeys.includes(e.key)) {
+            e.preventDefault();
+            appendCalc(e.key);
+        } else if (e.key === 'Enter' || e.key === '=') {
+            e.preventDefault();
+            calculateResult();
+        } else if (e.key === 'Backspace') {
+            e.preventDefault();
+            backspaceCalc();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            clearCalc();
+        }
+    });
 </script>
 </body>
 </html>

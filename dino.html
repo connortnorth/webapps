@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>🦖 Chrome Dino Game</title>
+    <meta name="description" content="Avoid the incoming cactuses. Tap spacebar or click to jump!">
     <style>
         body {
             margin: 0;
             padding: 10px;
             text-align: center;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #fff;
         }
         #gameCanvas {
@@ -16,6 +19,7 @@
             display: block;
             margin: 0 auto 15px auto;
             max-width: 100%;
+            box-shadow: 4px 4px 0px #111;
         }
         .game-score {
             font-size: 1.5rem;
@@ -36,6 +40,10 @@
             transform: translate(-2px, -2px);
             box-shadow: 6px 6px 0px #111;
         }
+        .action-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #111;
+        }
     </style>
 </head>
 <body>
@@ -48,19 +56,46 @@
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    let gameInterval, isPlaying = false;
-    let dino, obstacles, score, gameSpeed, frameCount;
+
+    let gameInterval;
+    let isPlaying = false;
+    let score = 0;
+    let gameSpeed = 5;
+    let frameCount = 0;
+
+    const GROUND_Y = 184; // The exact pixel height of the floor line
+
+    // Dino properties
+    let dino = {
+        x: 60,
+        y: 0,
+        width: 30,
+        height: 36,
+        vy: 0,
+        gravity: 0.6,
+        jumpForce: -11,
+        isGrounded: false
+    };
+
+    // Obstacle array
+    let obstacles = [];
 
     function startDino() {
         if (gameInterval) clearInterval(gameInterval);
+
         isPlaying = true;
         score = 0;
         gameSpeed = 5;
         frameCount = 0;
-        dino = { x: 60, y: 148, width: 30, height: 36, vy: 0, gravity: 0.65, jumpForce: -11.5, isGrounded: true };
         obstacles = [];
+
+        // Spawn Dino directly on the ground
+        dino.y = GROUND_Y - dino.height;
+        dino.vy = 0;
+        dino.isGrounded = true;
+
         document.getElementById('scoreVal').innerText = score;
-        gameInterval = setInterval(updateDinoGame, 1000 / 60);
+        gameInterval = setInterval(updateDinoGame, 1000 / 60); // 60 FPS
     }
 
     function stopDino() {
@@ -69,16 +104,21 @@
     }
 
     function spawnObstacle() {
-        if (Math.random() < 0.018 && obstacles.length < 3) {
-            let lastX = obstacles.length > 0 ? obstacles[obstacles.length - 1].x : canvas.width;
-            if (canvas.width - lastX > 200) {
-                obstacles.push({ x: canvas.width, y: 144, width: 24, height: 40 });
+        // Only attempt to spawn every 60 frames to prevent tight clusters
+        if (frameCount % 80 === 0) {
+            if (Math.random() < 0.7) {
+                obstacles.push({
+                    x: canvas.width,
+                    y: GROUND_Y - 40, // Sits exactly on the ground line
+                    width: 24,
+                    height: 40
+                });
             }
         }
     }
 
     function drawDinosaur(x, y, isGrounded, frames) {
-        ctx.fillStyle = '#15803d';
+        ctx.fillStyle = '#15803d'; // Retro Green
         ctx.fillRect(x, y + 12, 6, 12);
         ctx.fillRect(x + 4, y + 10, 18, 16);
         ctx.fillRect(x + 14, y, 14, 12);
@@ -90,8 +130,9 @@
         ctx.fillStyle = '#000000';
         ctx.fillRect(x + 18, y + 2, 2, 2);
 
+        // Running legs animation logic
         ctx.fillStyle = '#111111';
-        let legToggle = Math.floor(frames / 8) % 2 === 0;
+        let legToggle = Math.floor(frames / 6) % 2 === 0;
         if (!isGrounded) {
             ctx.fillRect(x + 6, y + 26, 4, 6);
             ctx.fillRect(x + 14, y + 26, 4, 6);
@@ -101,83 +142,123 @@
         }
     }
 
-    function drawCactus(x, y) {
+    function drawCactus(x, y, width, height) {
+        // Draw Main Stem
+        ctx.fillStyle = '#1e3a1e'; // Dark Outlines
+        ctx.fillRect(x, y, width, height);
+        ctx.fillStyle = '#22c55e'; // Cactus Green Center
+        ctx.fillRect(x + 2, y + 2, width - 4, height - 2);
+
+        // Left Branch Arm
         ctx.fillStyle = '#1e3a1e';
-        ctx.fillRect(x, y, 24, 40);
+        ctx.fillRect(x - 6, y + 10, 8, 14);
+        ctx.fillRect(x - 6, y + 10, 6, 6);
         ctx.fillStyle = '#22c55e';
-        ctx.fillRect(x + 2, y + 2, 20, 38);
-        ctx.fillStyle = '#fdfdfd';
-        ctx.fillRect(x, y, 6, 14);
-        ctx.fillRect(x + 6, y + 6, 4, 20);
-        ctx.fillRect(x + 18, y, 6, 20);
-        ctx.fillRect(x + 14, y + 12, 4, 18);
+        ctx.fillRect(x - 4, y + 12, 4, 12);
+
+        // Right Branch Arm
+        ctx.fillStyle = '#1e3a1e';
+        ctx.fillRect(x + width - 2, y + 14, 8, 12);
+        ctx.fillRect(x + width, y + 14, 6, 6);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(x + width, y + 16, 4, 10);
+
+        // Green Inner Rib detail line
         ctx.fillStyle = '#166534';
-        ctx.fillRect(x + 11, y + 4, 2, 32);
+        ctx.fillRect(x + (width / 2) - 1, y + 4, 2, height - 8);
     }
 
     function updateDinoGame() {
         frameCount++;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // 1. Draw Horizon Floor Line
         ctx.strokeStyle = '#111';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(0, 184);
-        ctx.lineTo(canvas.width, 184);
+        ctx.moveTo(0, GROUND_Y);
+        ctx.lineTo(canvas.width, GROUND_Y);
         ctx.stroke();
 
+        // 2. Physics: Handle Dino Jump Gravity
         dino.vy += dino.gravity;
         dino.y += dino.vy;
-        if (dino.y >= 148) {
-            dino.y = 148;
+
+        // Ground Stop Check
+        if (dino.y >= GROUND_Y - dino.height) {
+            dino.y = GROUND_Y - dino.height;
             dino.vy = 0;
             dino.isGrounded = true;
         }
 
+        // Draw the Dinosaur
         drawDinosaur(dino.x, dino.y, dino.isGrounded, frameCount);
+
+        // 3. Spawning & Obstacle Handling Loop
         spawnObstacle();
 
         for (let i = obstacles.length - 1; i >= 0; i--) {
             let obs = obstacles[i];
-            obs.x -= gameSpeed;
-            drawCactus(obs.x, obs.y);
+            obs.x -= gameSpeed; // Move left toward player
 
-            if (dino.x < obs.x + obs.width &&
+            // Render the unified vector Cactus
+            drawCactus(obs.x, obs.y, obs.width, obs.height);
+
+            // 4. Fixed AABB Hitbox Collision Check
+            if (
+                dino.x < obs.x + obs.width &&
                 dino.x + dino.width > obs.x &&
                 dino.y < obs.y + obs.height &&
-                dino.y + dino.height > obs.y) {
+                dino.y + dino.height > obs.y
+            ) {
                 stopDino();
+
+                // Game Over Screen Overlay
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
                 ctx.fillStyle = '#ff6b6b';
-                ctx.font = 'bold 26px sans-serif';
-                ctx.fillText('💥 GAME OVER', canvas.width / 2 - 85, canvas.height / 2);
+                ctx.font = 'bold 28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('💥 GAME OVER', canvas.width / 2, canvas.height / 2);
                 return;
             }
 
+            // Delete cactus when it leaves screen and grant points
             if (obs.x + obs.width < 0) {
                 obstacles.splice(i, 1);
                 score++;
                 document.getElementById('scoreVal').innerText = score;
-                if (score % 6 === 0) gameSpeed += 0.7;
+
+                // Gradually speed up game dynamically as score increases
+                if (score % 4 === 0 && gameSpeed < 12) {
+                    gameSpeed += 0.5;
+                }
             }
         }
     }
 
     function triggerJump() {
-        if (dino && dino.isGrounded && isPlaying) {
+        if (dino.isGrounded && isPlaying) {
             dino.vy = dino.jumpForce;
             dino.isGrounded = false;
         }
     }
 
+    // Event Listeners for controls
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
-            e.preventDefault();
+            e.preventDefault(); // Prevents page shifting down
             triggerJump();
         }
     });
     canvas.addEventListener('mousedown', triggerJump);
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        triggerJump();
+    });
 
-    // Auto-start game on load
+    // Run automatically on open
     startDino();
 </script>
 </body>

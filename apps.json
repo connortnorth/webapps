@@ -1,14 +1,20 @@
 [
   {
     "file": "calculator.html",
-    "icon": "📦",
-    "title": "calculator.html",
-    "description": "A custom standalone micro-app."
+    "icon": "🧮",
+    "title": "Calculator",
+    "description": "A simple calculator."
   },
   {
     "file": "dino.html",
+    "icon": "🦖",
+    "title": "Chrome Dino Game",
+    "description": "Avoid the incoming cactuses. Tap spacebar or click to jump!"
+  },
+  {
+    "file": "nothing.html",
     "icon": "📦",
-    "title": "dino.html",
-    "description": "A custom standalone micro-app."
+    "title": "Nothing",
+    "description": "This is literally just absolutely nothing"
   }
 ]

@@ -3,31 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automated Web Arcade</title>
+    <title>Web Apps</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: #f0f2f5; color: #111; padding: 30px 20px; }
         header { text-align: center; margin-bottom: 40px; }
         header h1 { font-size: 3.2rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 10px; }
         header p { font-size: 1.2rem; color: #555; font-weight: 500; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; max-width: 800px; margin: 0 auto; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
         .card { background: white; border: 4px solid #111; border-radius: 16px; padding: 30px 20px; text-align: center; cursor: pointer; box-shadow: 5px 5px 0px #111; transition: transform 0.1s, box-shadow 0.1s; }
         .card:hover { transform: translate(-4px, -4px); box-shadow: 9px 9px 0px #111; }
         .card .icon { font-size: 3.5rem; margin-bottom: 15px; }
         .card h2 { font-size: 1.6rem; margin-bottom: 10px; font-weight: 800; }
         .card p { color: #666; font-size: 0.95rem; line-height: 1.4; }
-        .app-view { display: none; max-width: 800px; margin: 0 auto; background: white; border: 4px solid #111; border-radius: 20px; padding: 25px; box-shadow: 8px 8px 0px #111; }
+
+        /* UPDATED: Expanded App View Container */
+        .app-view {
+            display: none;
+            max-width: 1200px; /* Increased from 800px to take up more horizontal space */
+            width: 95%;        /* Falls back to 95% width on smaller screens */
+            margin: 0 auto;
+            background: white;
+            border: 4px solid #111;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 8px 8px 0px #111;
+        }
         .app-view.active { display: block; }
         .back-btn { display: inline-block; margin-bottom: 20px; padding: 10px 20px; background: #e5e7eb; border: 3px solid #111; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 3px 3px 0px #111; }
         .back-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0px #111; }
-        iframe { width: 100%; height: 480px; border: none; background: transparent; }
+
+        /* UPDATED: Large Frame Height */
+        iframe {
+            width: 100%;
+            height: 75vh; /* Changed from 480px to 75% of the user's screen viewport height */
+            border: none;
+            background: transparent;
+        }
     </style>
 </head>
 <body>
 
 <div id="home-page">
     <header>
-        <h1>🕹️ Auto Web Arcade</h1>
+        <h1>Fun Web Projects</h1>
         <p>Your workspace files are automatically mapped and loaded below.</p>
     </header>
     <div class="grid-container" id="app-grid"></div>
