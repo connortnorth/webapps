@@ -1,0 +1,14 @@
+[
+  {
+    "file": "calculator.html",
+    "icon": "📦",
+    "title": "calculator.html",
+    "description": "A custom standalone micro-app."
+  },
+  {
+    "file": "dino.html",
+    "icon": "📦",
+    "title": "dino.html",
+    "description": "A custom standalone micro-app."
+  }
+]
