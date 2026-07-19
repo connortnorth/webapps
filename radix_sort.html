@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Radix Sort</title>
+</head>
+<body>
+    <script>
+      let input = prompt("What is the unsorted array?")
+      let inputArray = input.split(',')
+      console.log(inputArray)
+      const digitArrays = {
+          Digit0: [],
+          Digit1: [],
+          Digit2: [],
+          Digit3: [],
+          Digit4: [],
+          Digit5: [],
+          Digit6: [],
+          Digit7: [],
+          Digit8: [],
+          Digit9: []
+      }
+
+      let CurrentDigit = 0
+      let longestLength = 0
+
+      for (i = 0; i < inputArray.length; i++) {
+          if (inputArray[i].length > longestLength) {
+              longestLength = inputArray[i].length
+          }
+      }
+
+      for (i = 0; i < longestLength; i++) {
+
+          //move to the current digit array slot
+          for (j = 0; j < inputArray.length; j++) {
+              let lastDigit = inputArray[j] / (10 ** CurrentDigit)
+              lastDigit = Math.floor(lastDigit) % 10
+              let targetArray = "Digit" + lastDigit.toString()
+              digitArrays[targetArray].push(inputArray[j])
+          }
+
+          //solidify into one array
+          inputArray = Object.values((digitArrays)).flat()
+          for (j = 0; j < 10; j++) {
+              let targetArray = "Digit" + j
+              digitArrays[targetArray] = []
+          }
+          CurrentDigit++
+      }
+      console.log("Sorted", inputArray)
+    </script>
+
+</body>
+</html>
