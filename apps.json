@@ -1,5 +1,11 @@
 [
   {
+    "file": "bubble_sort.html",
+    "icon": "📦",
+    "title": "Sorting Visualizer",
+    "description": "A custom standalone micro-app."
+  },
+  {
     "file": "calculator.html",
     "icon": "🧮",
     "title": "Calculator",
